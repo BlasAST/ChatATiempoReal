@@ -1,44 +1,41 @@
 services:
-  php:
-    image: php
-    container_name: php_laravel
-    working_dir: /var/www/html
-    volumes:
-      - ./chat_real_time:/var/www/html
-    ports:
-      - "8000:8000" 
-    depends_on:
-      - mysql
-      - composer
-    command: sh -c "php artisan serve --host=0.0.0.0 --port=8000"
-    networks:
-      - red_laravel
-    
-  mysql:
-    image: mysql
-    container_name: mysql_laravel
+  mariadb:
+    image: bitnami/mariadb
+    container_name: mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: blas1234
-      MYSQL_DATABASE: laravel
-    volumes:
-      - db_laravel:/var/lib/mysql
+      ALLOW_EMPTY_PASSWORD: yes
+      MARIADB_ROOT_PASSWORD: blas1234
+      MARIADB_USER: blas1234
+      MARIADB_DATABASE: laravel
     ports:
       - "3305:3306"
-    networks:
-      - red_laravel
-  composer:
-    image: composer
-    container_name: composer_laravel
-    working_dir: /var/www/html
     volumes:
-      - ./chat_real_time:/var/www/html
+      - mariadb_chat_real_time:/bitnami/mariadb
     networks:
       - red_laravel
 
-    command:  composer install
-    # sh -c "composer create-project laravel/laravel &&"
+  laravel:
+    image: bitnami/laravel
+    container_name: laravel
+    working_dir: /var/www/html
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USERNAME: blas1234
+      DB_DATABASE: laravel
+    depends_on:
+      - mariadb
+    networks:
+      - red_laravel
+    ports:
+      - "8000:8000"
+    volumes:
+      -  ./chat_real_time:/var/www/html
+    command: sh -c "chmod -R 777 vendor/ && php artisan serve --host=0.0.0.0 --port=8000"
+
 networks:
   red_laravel:
     driver: bridge
+
 volumes:
-  db_laravel:
+  mariadb_chat_real_time:
